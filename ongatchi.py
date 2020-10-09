@@ -1,11 +1,11 @@
 import tkinter as tk
 import requests
 import json
+import os.path
 
 # Get API key
-f = open("credentials.txt","r+")
-API_KEY = f.readline()
-f.close()
+with open("credentials.txt","r+") as f:
+	API_KEY = f.readline()
 
 USER_AGENT = 'Ongatchi'
 
@@ -53,6 +53,7 @@ class Ongatchi(tk.Frame):
 			'dead':		'( X _ X )'
 		}
 
+		# Setup GUI
 		self.face = tk.StringVar(root)
 		self.face.set(self.faces['sleep'])
 
@@ -67,25 +68,54 @@ class Ongatchi(tk.Frame):
 		self.msg.config(font=('times', 15), width=450)
 		self.msg.pack()
 
+		# Variables
+		self.HP = 100
+		self.sad_counter = 0
+		self.fed_count = 0
+		self.previous = {}
+
+		# Load save data
+		if os.path.exists('./saves/save.txt'):
+			with open('saves/save.txt', 'r+') as sf:
+				self.HP = sf.readline()
+				self.sad_counter = sf.readline()
+				self.fed_count = sf.readline()
+				self.previous = sf.readline()
+
+		print(self.HP)
+
 		# Debug button
 		self.b = tk.Button(root, text="give food pls", command=self.eat)
 		self.b.pack()
 
-		self.previous = {}
-
 	def eat(self):
 		seek_food(latest)
+
+		self.fed_count += 1
 
 		if latest != self.previous:
 			self.display_text.set("Really liking " + latest['song'] + " by " + latest['artist'] + "!")
 			self.previous = latest
+			self.face.set(self.faces['happy'])
 		else:
 			self.display_text.set("Listen to something new...")
+			if self.sad_counter == 0:
+				self.face.set(self.faces['sad0'])
+			elif self.sad_counter == 1:
+				self.face.set(self.faces['sad1'])
+			elif self.sad_counter == 2:
+				self.face.set(self.faces['sad2'])
+			elif self.sad_counter > 2:
+				self.face.set(self.faces['dead'])
+			
+			self.sad_counter += 1
+
+		# save/overwrite states
 
 if __name__ == "__main__":
 	root = tk.Tk()
-	root.title("ongatchi Alpha 1.0")
-	root.geometry('450x450')
+	root.title("ongatchi alpha 1.0")
+	root.geometry('450x150')
 	on = Ongatchi(root)
 	on.pack(side="top", fill="both", expand=True)
 	root.mainloop()
